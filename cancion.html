@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EASYKID - SHINY Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Courier New', Courier, monospace; }
+        
+        #ui-container {
+            position: absolute; 
+            width: 100%; 
+            height: 100%;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            align-items: center; 
+            pointer-events: none; z-index: 10;
+        }
+
+        /* Estilo de la letra: Grande, blanca y con resplandor */
+        .lyric-box {
+            color: #fff; 
+            font-size: 2.2rem; 
+            font-weight: bold;
+            text-transform: uppercase; 
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+            opacity: 0; transform: scale(0.8);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .active { opacity: 1; transform: scale(1); filter: blur(0px); }
+        
+        /* Efecto de escaneo en el fondo */
+        #overlay {
+            position: absolute; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 5;
+        }
+
+        /* --- NUEVO: Pantalla de inicio para el audio --- */
+        #start-screen {
+            position: absolute; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; color: #00ffff; letter-spacing: 5px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>CLICK PARA EMPEZAR ✨</h1>
+    </div>
+
+    <audio id="musica-shiny" loop>
+        <source src="EASYKID-SHINY.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="overlay"></div>
+    <div id="ui-container">
+        <div id="lyric" class="lyric-box">SHINY</div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.136.0';
+
+        // --- LÓGICA DE AUDIO (NUEVO) ---
+        const audio = document.getElementById('musica-shiny');
+        const startScreen = document.getElementById('start-screen');
+
+        startScreen.addEventListener('click', () => {
+            startScreen.style.display = 'none'; // Quita la pantalla negra
+            audio.play(); // Inicia la música
+            iniciarCicloLetras(); // Inicia las letras sincronizadas
+        });
+
+        // --- ESCENA ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // --- EL OBJETO "SHINY" ---
+        const geo = new THREE.OctahedronGeometry(2, 0);
+        const mat = new THREE.MeshPhysicalMaterial({ 
+            color: 0x00ffff, metalness: 0.9, roughness: 0.1,
+            emissive: 0x001111, transmission: 0.3, thickness: 2
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+
+        const p1 = new THREE.PointLight(0x00ffff, 2, 50);
+        p1.position.set(5, 5, 5);
+        scene.add(p1);
+
+        const p2 = new THREE.PointLight(0xff00ff, 2, 50);
+        p2.position.set(-5, -5, 5);
+        scene.add(p2);
+
+        camera.position.z = 7;
+
+        // --- LETRA DE "SHINY" ---
+        const lyricEl = document.getElementById('lyric');
+        const lyrics = [
+            { text: "Baby yo te busco como un SHINY ✨", time: 2000 },
+            { text: "Tu recuerdo, como la sombra, behind me 👾", time: 1600 },
+            { text: "Le pregunto si puedo llamarla al IG 🐧", time: 1900 },
+            { text: "Siempre cambia, siempre es otra, como un Eeve 🎵", time: 1750 },
+            { text: "No responde, pero siempre tira un like 👍", time: 1730 },
+            { text: "Y eso me tiene pensando she likes me 🧠", time: 1750 },
+            { text: "Si te queda' conmigo, vamo a hacer twins 🤭", time: 2000 },
+            { text: "Bae, podemos ganar el tag team 🥺", time: 1650 },
+            { text: "Aquí hay algo, quédate 👾", time: 1300 },
+            { text: "bebé 💫", time: 900 },
+            { text: "Estoy pensándolo otra vez, arriésgate 😏", time: 2600 },
+            { text: "ah-eh 🎶", time: 800},
+            { text: "Que hoy puede suceder que te linkee... 🤭✨", time: 3500 },
+            { text: "Con mis mano' y con la bellaquera 🙊", time: 2000 },
+            { text: "Que te tengo y que me desespera 🥺", time: 1600 },
+            { text: "bebé...💫", time: 992 },
+            { text: "Bebé, estoy pensando en ti 🥰", time: 1500 },
+            { text: "Tú me gustaba' desde los 19 ", time: 1640 },
+            { text: "Tus storie' ya me tienen psyqui 🥲", time: 2100 },
+            { text: "Quiero tocar tu herida, flow Reiki 😉", time: 2000 },
+            { text: "Vo'a sanarte y llevarte pa un party 🤭🥳", time: 1800 },
+            { text: "Ese culo me dice que es táctil 🥵", time: 1700 },
+            { text: "Que me pegue y no salga más de aquí 🚀", time: 1800 },
+            { text: "A ti no te miento, Yaga & Mackie 👽🤖", time: 2000 },
+            { text: "yeh-eh-eh-eh 🎶", time: 800},
+            { text: "Sigo aquí 😉", time: 900 },
+            { text: "Hmm, esperando, lo vi venir 😜", time: 1750 },
+            { text: "Que de aquí te fueras sin despedir 😇", time: 1600 },
+            { text: "Te fuiste maquillada like Brandon Lee 😺", time: 1650 },
+            { text: "Aquí hay algo, quédate 👾", time: 1700 },
+            { text: "bebé 💫", time: 780 },
+            { text: "Estoy pensándolo otra vez, arriésgate😏", time: 2600 },
+            { text: "ah-eh 🎶", time: 800},
+            { text: "Que hoy puede suceder que te linkee... 🤭✨", time: 3850 },
+            { text: "Con mis mano' y con la bellaquera 🙊", time: 2400 },
+            { text: "Que te tengo y que me desespera 🥺", time: 1520 },
+            { text: "bebé... 💫", time: 990 },
+            { text: "Acércate 😏💫", time: 1200 },
+            { text: "Que ya no tengo nada que perder 😈", time: 1800 },
+            { text: "Como a John Cena, no te puedo ver 🫣", time: 1810 },
+            { text: "La nube encima, siempre va a llover 🌧️", time: 1500 },
+            { text: "Dime cómo no va a dejar de doler 🫠", time: 1800 },
+            { text: "Si tú no estás y no te dejas querer 😪", time: 1830 },
+            { text: "Como en The Office, Michael no va a volver 🙊", time: 2000 },
+            { text: "Así se siente y no lo puedo entender 😶‍🌫️", time: 2600 },
+            { text: "Sigo aquí 😉", time: 1300 },
+            { text: "Hmm, esperando, lo vi venir 😜", time: 1800 },
+            { text: "Que de aquí te fueras sin despedir 😇", time: 1630 },
+            { text: "Te fuiste maquillada like Brandon Lee 😺", time: 1600 },
+            { text: "Aquí hay algo, quédate 👾", time: 1700 },
+            { text: "bebé 💫", time: 750 },
+            { text: "Estoy pensándolo otra vez, arriésgate 😏", time: 2600 },
+            { text: "ah-eh 🎶", time: 800},
+            { text: "Que hoy puede suceder que te linkee... 🤭✨", time: 4000 },
+            { text: "Con mis mano' y con la bellaquera 🙊", time: 2100 },
+            { text: "Que te tengo y que me desespera 🥺", time: 1440 },
+            { text: "bebé... 💫", time: 1400 },
+            { text: "🎶💫🎶", time: 2100 },
+            { text: "Yeh 🎶", time: 1900 },
+            { text: "bebé 🎶", time: 2000 },
+            { text: "yeh 🎶", time: 2500 },
+            { text: "Espero te guste esta sopresa 🫠", time: 2500 },
+            { text: "Porque me la pase escuchando esta cancion 😖", time: 3500 },
+            { text: " Sabes cuanto? 😵‍💫", time: 2000},
+            { text: " Mas de 10 veces 😩", time: 3000},
+            { text: " Para poder sincronizar la letra con la cancion 😪🙃", time: 3500},
+            { text: " Como no tenia nada que hacer jsjs 😅", time: 3000},
+            { text: " Dije como tanto te gusta esta cancion 😅", time: 3000},
+            { text: " Te hago la cancion con la letra 🤭", time: 1770},
+
+
+        ];
+        
+        let currentIdx = 0;
+        function updateLyrics() {
+            // Si llegamos al final, reiniciamos el índice (opcional, para el loop)
+            if (currentIdx >= lyrics.length) currentIdx = 0;
+
+            const fraseActual = lyrics[currentIdx];
+            
+            lyricEl.classList.remove('active');
+            
+            setTimeout(() => {
+                lyricEl.innerText = fraseActual.text;
+                lyricEl.classList.add('active');
+                
+                // Programamos la SIGUIENTE frase usando el tiempo de la frase ACTUAL
+                // Así cada una dura lo que tú escribiste en la lista
+                setTimeout(updateLyrics, fraseActual.time);
+                
+                currentIdx++;
+            }, 400);
+        }
+
+        // Se movió al disparador del click para que no empiece antes que la música
+        function iniciarCicloLetras() {
+            const tiempoIntro = 7000; // Los 7 segundos de la música antes de cantar
+            setTimeout(() => {
+                updateLyrics(); 
+            }, tiempoIntro);
+        }
+
+        // --- ANIMACIÓN ---
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.01;
+            mesh.rotation.z += 0.005;
+            const scale = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+            mesh.scale.set(scale, scale, scale);
+            renderer.render(scene, camera);
+
+            // El diamante saltará un poquito siguiendo el ritmo de 96 BPM
+            const ritmo = Math.sin(Date.now() * 0.01); 
+            if (ritmo > 0.9) {
+            mesh.scale.set(1.2, 1.2, 1.2); // El "golpe" del bajo
+            } else {
+            mesh.scale.set(1.0, 1.0, 1.0); // Reposo
+            }
+        }
+        
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
